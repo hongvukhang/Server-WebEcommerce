@@ -1,6 +1,8 @@
 const express = require("express");
 const User = require("../models/user");
 const router = express.Router();
+const authController = require("../controller/auth");
+
 const { check, body } = require("express-validator");
 const userController = require("../controller/user");
 
@@ -47,8 +49,10 @@ router.post(
           }
         });
       }),
-    body("password", "Password is wrong!").isLength({ min: 6 }),
   ],
   userController.postLogin
 );
+
+router.post("/addToCart", authController.auth, userController.addToCart);
+
 module.exports = router;
