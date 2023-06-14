@@ -9,7 +9,7 @@ exports.auth = (req, res, next) => {
       if (user.auth.cookie_token.toString() === token.toString()) {
         const dateCreateCookie = new Date(user.auth.date);
         const date = new Date();
-        const isOutDate = date - dateCreateCookie <= 1800000;
+        const isOutDate = date - dateCreateCookie <= 7200000;
         if (isOutDate) {
           return next();
         }
