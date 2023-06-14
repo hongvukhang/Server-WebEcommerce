@@ -55,4 +55,8 @@ router.post(
 
 router.post("/addToCart", authController.auth, userController.addToCart);
 
+router.all("/getCart", authController.auth, userController.getCart);
+
+router.all("/updateCart", authController.auth, userController.updateCart);
+
 module.exports = router;

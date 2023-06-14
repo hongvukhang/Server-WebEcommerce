@@ -1,7 +1,22 @@
+const User = require("../models/user");
+
 exports.auth = (req, res, next) => {
-  const isAuth = req.body.isLogin;
-  if (isAuth === "true") {
-    return next();
-  }
-  return res.status(203).send("Need authenticity!");
+  const token = req.body.token;
+  const email = req.body.email;
+
+  User.findOne({ email: email })
+    .then((user) => {
+      if (user.auth.cookie_token.toString() === token.toString()) {
+        const dateCreateCookie = new Date(user.auth.date);
+        const date = new Date();
+        const isOutDate = date - dateCreateCookie <= 1800000;
+        if (isOutDate) {
+          return next();
+        }
+      }
+      return res.status(203).send("Need authenticity!");
+    })
+    .catch(() => {
+      return res.status(203).send("Need authenticity!");
+    });
 };

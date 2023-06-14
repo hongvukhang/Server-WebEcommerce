@@ -1,7 +1,9 @@
 const User = require("../models/user");
+const Product = require("../models/product");
 const bcrypt = require("bcrypt");
 const { validationResult, Result } = require("express-validator");
 const { v4: uuidv4 } = require("uuid");
+const product = require("../models/product");
 exports.postRegister = async (req, res, next) => {
   const password = req.body.password;
   const email = req.body.email;
@@ -92,6 +94,66 @@ exports.addToCart = (req, res, next) => {
       result
         .save()
         .then(() => res.status(201).send("Add to cart successfully!"));
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+};
+
+exports.getCart = (req, res) => {
+  const email = req.body.email;
+  const status = req.body.status;
+  User.findOne({ email: email })
+    .populate("cart.items.prodId")
+    .then((user) => {
+      if (status === "checkout") {
+        const data = {
+          fullName: user.fullName,
+          email: user.email,
+          phone: "0" + user.phone.toString(),
+          cart: user.cart.items.map((item) => ({
+            name: item.prodId.name,
+            price: item.prodId.price,
+            quantity: item.quantity,
+          })),
+        };
+
+        res.send(data);
+      } else {
+        res.send(user.cart);
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+};
+
+exports.updateCart = (req, res) => {
+  const email = req.body.email;
+  const data = req.body.data;
+  User.findOne({ email: email })
+    .then((user) => {
+      const cartUser = [...user.cart.items];
+      const cartFilter = cartUser.filter((item) =>
+        data.some((prod) => prod._id.toString() === item._id.toString())
+      );
+      const cartUpdate = cartFilter.map((item) => {
+        const dataUpdateItem = data.find(
+          (e) => e._id.toString() === item._id.toString()
+        );
+        return {
+          ...item,
+          quantity: dataUpdateItem.quantity,
+        };
+      });
+
+      user.cart = { items: cartUpdate };
+      return user;
+    })
+    .then((result) => {
+      result.save().then(() => {
+        res.status(201).send("Updated Success");
+      });
     })
     .catch((err) => {
       console.log(err);
