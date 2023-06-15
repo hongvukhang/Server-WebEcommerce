@@ -1,9 +1,20 @@
-const User = require("../models/user");
-const Product = require("../models/product");
 const bcrypt = require("bcrypt");
-const { validationResult, Result } = require("express-validator");
 const { v4: uuidv4 } = require("uuid");
-const product = require("../models/product");
+const { validationResult, Result } = require("express-validator");
+const nodemailer = require("nodemailer");
+const sendgridTransport = require("nodemailer-sendgrid-transport");
+
+const User = require("../models/user");
+
+const transporter = nodemailer.createTransport(
+  sendgridTransport({
+    auth: {
+      api_key:
+        "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",
+    },
+  })
+);
+
 exports.postRegister = async (req, res, next) => {
   const password = req.body.password;
   const email = req.body.email;
@@ -157,5 +168,91 @@ exports.updateCart = (req, res) => {
     })
     .catch((err) => {
       console.log(err);
+    });
+};
+
+exports.confirmMail = (req, res) => {
+  const email = req.body.email;
+  const userData = req.body.user;
+  User.findOne({ email: email })
+    .populate("cart.items.prodId")
+    .then((user) => {
+      const cart = user.cart.items;
+
+      let total = 0;
+
+      cart.forEach((item) => {
+        total += item.prodId.price * item.quantity;
+      });
+
+      transporter.sendMail({
+        to: userData.email,
+        from: "shop@node-complete.com",
+        subject: "Confirm transaction",
+        amp: `
+        <!doctype html>
+        <html ⚡4email data-css-strict>
+        <head>
+            <meta charset="utf-8">
+            <script async src="https://cdn.ampproject.org/v0.js"></script>
+            <style amp4email-boilerplate>
+                body {
+                    visibility: hidden
+                }
+            </style>
+            <style amp-custom>
+                h1 {
+                    margin: 1rem;
+                }
+                table{
+                    text-align: center;
+                }
+                th, td {
+                border:1px solid black;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Xin Chào ${userData.fullName}</h1>
+            <p>Phone: ${userData.phone}</p>
+            <p>Address: ${userData.address}</p>
+
+            <table style="width:100%">
+                <tr>
+                    <td>Tên sản phẩm</td>
+                    <td>Hình ảnh</td>
+                    <td>Giá</td>
+                    <td>Số lượng</td>
+                    <td>Thành tiền</td>
+
+                </tr>
+                ${cart.forEach((item) => {
+                  return `<tr>
+                      <td>${item.prodId.name}</td>
+                      <td>
+                        <amp-img
+                          src=${item.prodId.img1}
+                          alt="photo description"
+                          width="100"
+                          height="100"
+                        ></amp-img>
+                      </td>
+                      <td>${item.prodId.price}</td>
+                      <td>${item.quantity}</td>
+                      <td>${item.prodId.price * item.quantity}</td>
+                    </tr>`;
+                })}
+            </table>
+            <h1>Tổng thanh toán: </h1>
+            <h1>${total} </h1>
+            <h1>Cảm ơn bạn!</h1>
+        </body>
+        </html>
+
+      `,
+      });
+    })
+    .catch((err) => {
+      res.send(err);
     });
 };

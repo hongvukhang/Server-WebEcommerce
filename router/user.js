@@ -59,4 +59,10 @@ router.all("/getCart", authController.auth, userController.getCart);
 
 router.all("/updateCart", authController.auth, userController.updateCart);
 
+router.post(
+  "/sendMailConfirm",
+  authController.auth,
+  userController.confirmMail
+);
+
 module.exports = router;
