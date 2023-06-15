@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport(
   sendgridTransport({
     auth: {
       api_key:
-        "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",
+        "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",
     },
   })
 );
@@ -170,6 +170,14 @@ exports.updateCart = (req, res) => {
       console.log(err);
     });
 };
+// function format price
+
+function formatNumberToPrice(number) {
+  return new Intl.NumberFormat("vi", {
+    style: "currency",
+    currency: "VND",
+  }).format(number);
+}
 
 exports.confirmMail = (req, res) => {
   const email = req.body.email;
@@ -184,72 +192,67 @@ exports.confirmMail = (req, res) => {
       cart.forEach((item) => {
         total += item.prodId.price * item.quantity;
       });
-
+      total = formatNumberToPrice(total);
       transporter.sendMail({
         to: userData.email,
-        from: "shop@node-complete.com",
+        from: "tailieudahoc@gmail.com",
         subject: "Confirm transaction",
-        amp: `
-        <!doctype html>
-        <html ⚡4email data-css-strict>
-        <head>
-            <meta charset="utf-8">
-            <script async src="https://cdn.ampproject.org/v0.js"></script>
-            <style amp4email-boilerplate>
-                body {
-                    visibility: hidden
-                }
-            </style>
-            <style amp-custom>
-                h1 {
-                    margin: 1rem;
-                }
-                table{
-                    text-align: center;
-                }
-                th, td {
-                border:1px solid black;
-                }
-            </style>
-        </head>
-        <body>
-            <h1>Xin Chào ${userData.fullName}</h1>
-            <p>Phone: ${userData.phone}</p>
-            <p>Address: ${userData.address}</p>
+        html: `
+        <style>
+          h1 {
+            margin: 1rem;
+          }
+          table{
+              text-align: center;
+          }
+          th, td {
+          border:1px solid black;
+          }
+        </style>
+        <h1>Xin Chào ${userData.fullName}</h1>
+        <p>Phone: ${userData.phone}</p>
+        <p>Address: ${userData.address}</p>
 
-            <table style="width:100%">
-                <tr>
-                    <td>Tên sản phẩm</td>
-                    <td>Hình ảnh</td>
-                    <td>Giá</td>
-                    <td>Số lượng</td>
-                    <td>Thành tiền</td>
+        <table style="width:100% ">
+          <tr>
+              <td>Tên sản phẩm</td>
+              <td>Hình ảnh</td>
+              <td>Giá</td>
+              <td>Số lượng</td>
+              <td>Thành tiền</td>
 
-                </tr>
-                ${cart.forEach((item) => {
+          </tr>
+                ${cart.map((item) => {
                   return `<tr>
-                      <td>${item.prodId.name}</td>
-                      <td>
-                        <amp-img
-                          src=${item.prodId.img1}
-                          alt="photo description"
-                          width="100"
-                          height="100"
-                        ></amp-img>
-                      </td>
-                      <td>${item.prodId.price}</td>
-                      <td>${item.quantity}</td>
-                      <td>${item.prodId.price * item.quantity}</td>
-                    </tr>`;
+                    <td>${item.prodId.name}</td>
+                    <td>
+                      <img
+                        src=${item.prodId.img1}
+                        alt="photo"
+                        width="100"
+                        height="100"
+                      ></img>
+                    </td>
+                    <td>${formatNumberToPrice(item.prodId.price)}</td>
+                    <td>${item.quantity}</td>
+                    <td>${formatNumberToPrice(
+                      item.prodId.price * item.quantity
+                    )}</td>
+                  </tr>`;
                 })}
+                </tr>
             </table>
-            <h1>Tổng thanh toán: </h1>
-            <h1>${total} </h1>
-            <h1>Cảm ơn bạn!</h1>
-        </body>
-        </html>
-
+            <h1>Tổng thanh toán:</h1>
+            <h1>${total}</h1>
+            <h1>Xin cảm ơn bạn</h1>
       `,
+      });
+      user.cart = { items: [] };
+      return user;
+    })
+    .then((result) => {
+      result.save().then(() => {
+        res.status(201).send("Send Email is success!");
       });
     })
     .catch((err) => {
