@@ -5,7 +5,7 @@ const nodemailer = require("nodemailer");
 const sendgridTransport = require("nodemailer-sendgrid-transport");
 
 const User = require("../models/user");
-
+const History = require("../models/history");
 const transporter = nodemailer.createTransport(
   sendgridTransport({
     auth: {
@@ -21,7 +21,7 @@ exports.postRegister = async (req, res, next) => {
   const confirmPassword = req.body.password;
   const phone = req.body.phone;
   const fullName = req.body.fullName;
-
+  const role = "customer";
   const auth = { cookie_token: "", date: "" };
 
   const errors = validationResult(req).errors;
@@ -36,6 +36,7 @@ exports.postRegister = async (req, res, next) => {
     password,
     confirmPassword,
     phone,
+    role,
   });
   const salt = await bcrypt.genSalt(10);
   user.password = await bcrypt.hash(user.password, salt);
@@ -247,15 +248,36 @@ exports.confirmMail = (req, res) => {
             <h1>Xin cảm ơn bạn</h1>
       `,
       });
+
+      //Create history
+
+      const history = new History({
+        email: user.email,
+        userId: user._id,
+        name: userData.fullName,
+        phone: userData.phone,
+        address: userData.address,
+        total: total,
+        delivery: "Waiting for progressing",
+        status: "Waiting for pay",
+        product: cart.map((item) => ({
+          id: item.prodId._id,
+          img: item.prodId.img1,
+          name: item.prodId.name,
+          price: item.prodId.price,
+          quantity: item.quantity,
+        })),
+      });
+      history.save();
       user.cart = { items: [] };
       return user;
     })
     .then((result) => {
       result.save().then(() => {
-        res.status(201).send("Send Email is success!");
+        res.status(201).send("Order success!");
       });
     })
     .catch((err) => {
-      res.send(err);
+      res.status(500).send({ err: { msg: err } });
     });
 };
