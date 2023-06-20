@@ -2,7 +2,7 @@ const bcrypt = require("bcrypt");
 const { v4: uuidv4 } = require("uuid");
 const { validationResult, Result } = require("express-validator");
 const User = require("../models/user");
-
+const Product = require("../models/product")
 const firebase = require("../firebase/firebase");
 
 exports.postLoginAdmin = (req, res) => {
@@ -94,8 +94,19 @@ const upload = async (file) => {
 };
 
 exports.uploadImage = async (req, res) => {
-  console.log(req);
-  console.log(req.body.name);
+  
+  const name = req.body.name
+  const category = req.body.category
+  const short_desc = req.body.short_desc
+  const long_desc = req.body.long_desc
+  
+  const link = awit req.files.map(file=>{
+    return upload(file)
+  })
+  
+  const product = new Product({
+    
+  })
   // req.files.forEach((file) => {
   //   upload(file).then((result) => {
   //     link.push(result);
