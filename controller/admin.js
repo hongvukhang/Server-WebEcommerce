@@ -99,14 +99,24 @@ exports.uploadImage = async (req, res) => {
   const category = req.body.category
   const short_desc = req.body.short_desc
   const long_desc = req.body.long_desc
-  
+  const price = req.body.price
   const link = awit req.files.map(file=>{
     return upload(file)
   })
   
-  const product = new Product({
-    
+  const product = await new Product({
+    category:category,
+    name:name,
+    long_desc,
+    short_desc,
+    price,
+    img1: link[0],
+    img2: link[1],
+    img3: link[2],
+    img4: link[3]
   })
+  
+  await product.save()
   // req.files.forEach((file) => {
   //   upload(file).then((result) => {
   //     link.push(result);
