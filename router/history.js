@@ -6,4 +6,9 @@ const historyController = require("../controller/history");
 
 router.post("/history", authController.auth, historyController.getHistory);
 
+router.post(
+  "/historyAdmin",
+  authController.authAdmin,
+  historyController.getHistory
+);
 module.exports = router;

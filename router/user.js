@@ -2,9 +2,15 @@ const express = require("express");
 const User = require("../models/user");
 const router = express.Router();
 const authController = require("../controller/auth");
-
+const adminController = require("../controller/admin");
 const { check, body } = require("express-validator");
 const userController = require("../controller/user");
+
+const multer = require("multer");
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+});
 
 router.post(
   "/register",
@@ -53,16 +59,37 @@ router.post(
   userController.postLogin
 );
 
+router.post(
+  "/loginAdmin",
+  [
+    check("email")
+      .isEmail()
+      .withMessage("Please enter a valid email")
+      .custom((value, { req }) => {
+        return User.findOne({ email: value }).then((userDoc) => {
+          if (!userDoc) {
+            return Promise.reject("E-Mail is wrong!");
+          }
+        });
+      }),
+  ],
+  adminController.postLoginAdmin
+);
+
 router.post("/addToCart", authController.auth, userController.addToCart);
 
 router.all("/getCart", authController.auth, userController.getCart);
 
 router.all("/updateCart", authController.auth, userController.updateCart);
 
+router.post("/user", authController.authAdmin, adminController.getAllUser);
+
 router.post(
   "/sendMailConfirm",
   authController.auth,
   userController.confirmMail
 );
+
+router.post("/upload", upload.any("file"), adminController.uploadImage);
 
 module.exports = router;
