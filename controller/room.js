@@ -22,7 +22,7 @@ exports.createChat = async (req, res, next) => {
       await room.save();
       io.getIO().emit("msg", {
         action: "Created",
-        msg: { email: email, _id: Math.random() },
+        msg: { email: email, _id: Math.random(), msg: msg },
       });
     } else {
       isRoom.dateSend = new Date();

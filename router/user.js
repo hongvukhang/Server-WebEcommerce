@@ -100,5 +100,6 @@ router.post(
   roomController.getAdminChat
 );
 router.post("/getChats", authController.authAdmin, roomController.getChats);
-router.post("getChat", authController.auth, roomController.getChats)
+
+router.post("/getChatUser", authController.auth, roomController.getChats);
 module.exports = router;
