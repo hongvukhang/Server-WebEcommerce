@@ -1,9 +1,10 @@
 const express = require("express");
-const User = require("../models/user");
 const router = express.Router();
+const { check, body } = require("express-validator");
+const User = require("../models/user");
 const authController = require("../controller/auth");
 const adminController = require("../controller/admin");
-const { check, body } = require("express-validator");
+const roomController = require("../controller/room");
 const userController = require("../controller/user");
 
 const multer = require("multer");
@@ -92,4 +93,11 @@ router.post(
 
 router.post("/upload", upload.any("file"), adminController.uploadImage);
 
+router.post("/room-chat", roomController.createChat);
+router.post(
+  "/getAdminChat",
+  authController.authAdmin,
+  roomController.getAdminChat
+);
+router.post("/getChats", authController.authAdmin, roomController.getChats);
 module.exports = router;

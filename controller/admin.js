@@ -88,7 +88,7 @@ const upload = async (file) => {
   const [url] = await firebase.bucket.file(file.originalname).getSignedUrl({
     version: "v2",
     action: "read",
-    expires: Date.now() + 1000 * 60 * 60,
+    expires: Date.now() + 1000 * 60 * 60 * 24 * 30 * 12 * 2,
   });
   return url;
 };
