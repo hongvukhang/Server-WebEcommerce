@@ -123,3 +123,28 @@ exports.uploadImage = async (req, res) => {
   //   });
   // });
 };
+exports.updateProduct = (req,res)=>{
+  const idProduct = req.body.id
+  const name = req.body.name
+  const category = req.body.category
+  const price = req.body.price
+  const short_desc = req.body.short_desc
+  const long_desc = req.body.long_desc
+  
+  Product.find({_id: idProduct})
+  .then(product => {
+    product.name = name;
+    product.category = category
+    product.price = price
+    product.short_desc = short_desc
+    product.long_desc = long_desc
+    return product
+  })
+  .then(result => {
+    result.save()
+    .then(()=> res.status(202).send({msg: "Updated Product Success!"}))
+  })
+  .catch(err => {
+    console.log(err)
+    })
+}
