@@ -148,3 +148,9 @@ exports.updateProduct = (req,res)=>{
     console.log(err)
     })
 }
+
+exports.deleteProduct = (req, res) => {
+  const id = req.body.id
+  
+/////
+}
