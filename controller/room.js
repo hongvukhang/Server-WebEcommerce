@@ -48,6 +48,7 @@ exports.getAdminChat = (req, res) => {
       const resultRoom = room.map((result) => ({
         _id: result._id,
         emailUser: result.emailUSer,
+        dateSend: result.dateSend,
       }));
       res.status(202).send(resultRoom);
     })
