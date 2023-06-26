@@ -91,7 +91,7 @@ router.post(
   userController.confirmMail
 );
 
-router.post("/upload", upload.any("file"), adminController.uploadImage);
+router.post("/upload", upload.any("file"), adminController.addProduct);
 
 router.post("/room-chat", roomController.createChat);
 router.post(

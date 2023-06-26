@@ -12,6 +12,7 @@ const productSchema = new Schema({
   name: { type: String, required: true },
   price: { type: Number, required: true },
   short_desc: { type: String, required: true },
+  amount: { type: Number, required: true },
 });
 
 module.exports = mongoose.model("Product", productSchema);

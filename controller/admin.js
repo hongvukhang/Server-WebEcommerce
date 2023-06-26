@@ -93,13 +93,13 @@ const upload = async (file) => {
   return url;
 };
 
-exports.uploadImage = async (req, res) => {
+exports.addProduct = async (req, res) => {
   const name = req.body.name;
   const category = req.body.category;
   const short_desc = req.body.short_desc;
   const long_desc = req.body.long_desc;
   const price = req.body.price;
-  console.log(req.body);
+
   const link = req.files.map((file) => {
     return upload(file);
   });
@@ -114,43 +114,43 @@ exports.uploadImage = async (req, res) => {
     img2: await link[1],
     img3: await link[2],
     img4: await link[3],
+    amount: 1000,
   });
 
   await product.save().then(() => res.status(201).send("Add product success"));
-  // req.files.forEach((file) => {
-  //   upload(file).then((result) => {
-  //     link.push(result);
-  //   });
-  // });
 };
-exports.updateProduct = (req,res)=>{
-  const idProduct = req.body.id
-  const name = req.body.name
-  const category = req.body.category
-  const price = req.body.price
-  const short_desc = req.body.short_desc
-  const long_desc = req.body.long_desc
-  
-  Product.find({_id: idProduct})
-  .then(product => {
-    product.name = name;
-    product.category = category
-    product.price = price
-    product.short_desc = short_desc
-    product.long_desc = long_desc
-    return product
-  })
-  .then(result => {
-    result.save()
-    .then(()=> res.status(202).send({msg: "Updated Product Success!"}))
-  })
-  .catch(err => {
-    console.log(err)
-    })
-}
+exports.updateProduct = (req, res) => {
+  const idProduct = req.body.id;
+  const name = req.body.name;
+  const category = req.body.category;
+  const price = req.body.price;
+  const short_desc = req.body.short_desc;
+  const long_desc = req.body.long_desc;
 
-exports.deleteProduct = (req, res) => {
-  const id = req.body.id
-  
-/////
-}
+  Product.findOne({ _id: idProduct })
+    .then((product) => {
+      product.name = name;
+      product.category = category;
+      product.price = price;
+      product.short_desc = short_desc;
+      product.long_desc = long_desc;
+      return product;
+    })
+    .then((result) => {
+      result
+        .save()
+        .then(() => res.status(204).send({ msg: "Updated Product Success!" }));
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+};
+
+exports.deleteProduct = async (req, res) => {
+  const id = req.body.id;
+  Product.deleteOne({ _id: id })
+    .then((result) => {
+      res.status(200).send({ msg: "Deleted Success" });
+    })
+    .catch((err) => res.send(err));
+};

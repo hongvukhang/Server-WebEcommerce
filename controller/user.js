@@ -6,6 +6,7 @@ const sendgridTransport = require("nodemailer-sendgrid-transport");
 
 const User = require("../models/user");
 const History = require("../models/history");
+const Product = require("../models/product");
 const transporter = nodemailer.createTransport(
   sendgridTransport({
     auth: {
@@ -82,34 +83,40 @@ exports.postLogin = (req, res, next) => {
     );
 };
 
-exports.addToCart = (req, res, next) => {
+exports.addToCart = async (req, res, next) => {
   const id = req.body.prodId;
   const email = req.body.email;
   const quantity = req.body.quantity;
 
-  User.findOne({ email: email })
-    .then((user) => {
-      const cartUser = [...user.cart.items];
-      const prodIndex = cartUser.findIndex(
-        (prod) => prod.prodId.toString() === id.toString()
-      );
-      if (prodIndex === -1) {
-        cartUser.push({ prodId: id, quantity: quantity });
+  const product = await Product.findOne({ _id: id });
+  const amountProduct = (await product.amount) >= quantity;
+  if (amountProduct) {
+    User.findOne({ email: email })
+      .then((user) => {
+        const cartUser = [...user.cart.items];
+        const prodIndex = cartUser.findIndex(
+          (prod) => prod.prodId.toString() === id.toString()
+        );
+        if (prodIndex === -1) {
+          cartUser.push({ prodId: id, quantity: quantity });
+          user.cart = { items: cartUser };
+          return user;
+        }
+        cartUser[prodIndex].quantity += quantity;
         user.cart = { items: cartUser };
         return user;
-      }
-      cartUser[prodIndex].quantity += quantity;
-      user.cart = { items: cartUser };
-      return user;
-    })
-    .then((result) => {
-      result
-        .save()
-        .then(() => res.status(201).send("Add to cart successfully!"));
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+      })
+      .then((result) => {
+        result
+          .save()
+          .then(() => res.status(201).send("Add to cart successfully!"));
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  } else {
+    res.status(200).send("Product is sold out");
+  }
 };
 
 exports.getCart = (req, res) => {
@@ -140,36 +147,52 @@ exports.getCart = (req, res) => {
     });
 };
 
-exports.updateCart = (req, res) => {
+exports.updateCart = async (req, res) => {
   const email = req.body.email;
   const data = req.body.data;
-  User.findOne({ email: email })
-    .then((user) => {
-      const cartUser = [...user.cart.items];
-      const cartFilter = cartUser.filter((item) =>
-        data.some((prod) => prod._id.toString() === item._id.toString())
-      );
-      const cartUpdate = cartFilter.map((item) => {
-        const dataUpdateItem = data.find(
-          (e) => e._id.toString() === item._id.toString()
-        );
-        return {
-          ...item,
-          quantity: dataUpdateItem.quantity,
-        };
-      });
 
-      user.cart = { items: cartUpdate };
-      return user;
-    })
-    .then((result) => {
-      result.save().then(() => {
-        res.status(201).send("Updated Success");
+  //Check amount product
+  const product = await Product.find();
+
+  const check = data.map((item) => {
+    const filterItem = product.filter((product) => {
+      return product._id.toString() === item.prodId.toString();
+    })[0];
+
+    return filterItem.amount < item.quantity ? false : true;
+  });
+
+  if (check.some((e) => e === false)) {
+    res.status(200).send({ msg: "The product is not enough or out of stock" });
+  } else {
+    User.findOne({ email: email })
+      .then((user) => {
+        const cartUser = [...user.cart.items];
+        const cartFilter = cartUser.filter((item) =>
+          data.some((prod) => prod._id.toString() === item._id.toString())
+        );
+        const cartUpdate = cartFilter.map((item) => {
+          const dataUpdateItem = data.find(
+            (e) => e._id.toString() === item._id.toString()
+          );
+          return {
+            ...item,
+            quantity: dataUpdateItem.quantity,
+          };
+        });
+
+        user.cart = { items: cartUpdate };
+        return user;
+      })
+      .then((result) => {
+        result.save().then(() => {
+          res.status(201).send("Updated Success");
+        });
+      })
+      .catch((err) => {
+        console.log(err);
       });
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+  }
 };
 // function format price
 
@@ -248,6 +271,17 @@ exports.confirmMail = (req, res) => {
             <h1>Xin cảm ơn bạn</h1>
       `,
       });
+
+      for (let i = 0; i < cart.length; i++) {
+        Product.find({ _id: cart[i].prodId._id })
+          .then((product) => {
+            product[0].amount -= cart[i].quantity;
+            return product[0];
+          })
+          .then((prod) => {
+            prod.save();
+          });
+      }
 
       //Create history
 
